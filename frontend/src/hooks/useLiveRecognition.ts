@@ -1,16 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError, api } from "../services/api";
-import type { CameraState, RecognitionResult, RecognitionUiState } from "../types";
+import type { CameraState, DetectedFace, RecognitionResult, RecognitionUiState } from "../types";
 
 type Options = {
   intervalMs: number;
   enabled: boolean;
 };
 
+function drawOverlay(
+  canvas: HTMLCanvasElement,
+  faces: DetectedFace[],
+  recognizedIndex: number | null,
+) {
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return;
+  }
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  faces.forEach((face) => {
+    const x = face.bbox.x * canvas.width;
+    const y = face.bbox.y * canvas.height;
+    const width = face.bbox.width * canvas.width;
+    const height = face.bbox.height * canvas.height;
+    const isPrimary = recognizedIndex === face.index;
+    const color = face.recognized ? "#34d399" : "#fbbf24";
+    context.lineWidth = isPrimary ? 5 : 3;
+    context.strokeStyle = color;
+    context.strokeRect(x, y, width, height);
+
+    const name = face.person ? `${face.person.first_name} ${face.person.last_name}` : "Unknown";
+    const label = `#${face.index} ${name} · ${face.action}`;
+    context.font = "600 16px Inter, sans-serif";
+    const textWidth = context.measureText(label).width;
+    const boxHeight = 26;
+    const labelY = Math.max(0, y - boxHeight - 4);
+    context.fillStyle = "rgba(15, 23, 42, 0.85)";
+    context.fillRect(x, labelY, Math.min(textWidth + 16, width + 80), boxHeight);
+    context.fillStyle = color;
+    context.fillText(label, x + 8, labelY + 18);
+  });
+}
+
 export function useLiveRecognition({ intervalMs, enabled }: Options) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const inFlight = useRef(false);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [cameraError, setCameraError] = useState<string>("");
@@ -68,11 +103,16 @@ export function useLiveRecognition({ intervalMs, enabled }: Options) {
     }
     const video = videoRef.current;
     const canvas = canvasRef.current;
+    const overlay = overlayRef.current;
     if (!video || !canvas || video.readyState < 2) {
       return;
     }
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
+    if (overlay) {
+      overlay.width = canvas.width;
+      overlay.height = canvas.height;
+    }
     const context = canvas.getContext("2d");
     if (!context) {
       return;
@@ -87,6 +127,9 @@ export function useLiveRecognition({ intervalMs, enabled }: Options) {
       const recognition = await api.recognize(blob);
       setNetworkError("");
       setResult(recognition);
+      if (overlay) {
+        drawOverlay(overlay, recognition.faces || [], recognition.recognized_face_index);
+      }
       if (!recognition.face_detected) {
         setUiState("no-face");
       } else if (recognition.recognized) {
@@ -125,6 +168,7 @@ export function useLiveRecognition({ intervalMs, enabled }: Options) {
   return {
     videoRef,
     canvasRef,
+    overlayRef,
     cameraState,
     cameraError,
     uiState,

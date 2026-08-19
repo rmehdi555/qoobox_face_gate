@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { AlertTriangle, ScanFace, UserRoundX, VideoOff } from "lucide-react";
+import { AlertTriangle, ScanFace, Smile, UserRoundX, VideoOff } from "lucide-react";
 
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { usePageTitle } from "../components/ui/Toast";
 import { useLiveRecognition } from "../hooks/useLiveRecognition";
 import { api } from "../services/api";
+import type { DetectedFace, RecognitionResult } from "../types";
 
 export function LiveRecognitionPage() {
   usePageTitle("Live Recognition");
@@ -27,13 +28,15 @@ export function LiveRecognitionPage() {
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Live Recognition</h1>
         <p className="mt-1 text-sm text-slate-500">
-          The webcam stream is analyzed on the server. Recognition updates automatically while the camera is running.
+          Each detected face is numbered left to right. The recognized person is highlighted on the video, along with
+          their expression.
         </p>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-card">
         <div className="relative aspect-video bg-black">
-          <video ref={live.videoRef} className="h-full w-full object-cover" playsInline muted autoPlay />
+          <video ref={live.videoRef} className="absolute inset-0 h-full w-full object-contain" playsInline muted autoPlay />
+          <canvas ref={live.overlayRef} className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
           <canvas ref={live.canvasRef} className="hidden" />
           {cameraBlocked ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center text-white">
@@ -60,7 +63,43 @@ export function LiveRecognitionPage() {
         result={live.result}
         networkError={live.networkError}
       />
+
+      {live.result?.faces && live.result.faces.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {live.result.faces.map((face) => (
+            <FaceCard key={face.index} face={face} primary={live.result?.recognized_face_index === face.index} />
+          ))}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function FaceCard({ face, primary }: { face: DetectedFace; primary: boolean }) {
+  const name = face.person ? `${face.person.first_name} ${face.person.last_name}` : "Unknown person";
+  return (
+    <Card className={clsx("p-4", primary && "border-emerald-300 bg-emerald-50", face.recognized && !primary && "border-emerald-200")}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Face {face.index}</p>
+          <p className="mt-1 text-base font-semibold text-slate-900">{name}</p>
+          <p className="mt-1 text-sm text-slate-700">
+            {face.emotion_label} · {face.action}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Expression confidence {Math.round(face.emotion_confidence * 100)}%
+            {face.recognized ? ` · Match ${Math.round(face.confidence * 100)}%` : ""}
+          </p>
+        </div>
+            {face.recognized ? (
+              <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">
+                {primary ? "Identified" : "Matched"}
+              </span>
+            ) : (
+              <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-600">Unknown</span>
+            )}
+      </div>
+    </Card>
   );
 }
 
@@ -74,7 +113,7 @@ function StatusCard({
   blocked: boolean;
   cameraError: string;
   uiState: ReturnType<typeof useLiveRecognition>["uiState"];
-  result: ReturnType<typeof useLiveRecognition>["result"];
+  result: RecognitionResult | null;
   networkError: string;
 }) {
   let title = "Waiting for camera";
@@ -98,15 +137,19 @@ function StatusCard({
     tone = "warning";
     Icon = ScanFace;
   } else if (uiState === "unknown") {
-    title = "Unknown Person";
-    message = "No registered person matched this face.";
+    title = result?.face_count && result.face_count > 1 ? `${result.face_count} Faces Detected` : "Unknown Person";
+    message = result?.message || "No registered person matched this face.";
     tone = "warning";
     Icon = UserRoundX;
   } else if (uiState === "recognized" && result?.person) {
     title = "Person Recognized";
-    message = `${result.person.first_name} ${result.person.last_name}`;
+    const action = result.faces.find((face) => face.index === result.recognized_face_index)?.action;
+    message =
+      result.face_count > 1
+        ? `${result.person.first_name} ${result.person.last_name} is Face ${result.recognized_face_index} of ${result.face_count}${action ? ` · ${action}` : ""}`
+        : `${result.person.first_name} ${result.person.last_name}${action ? ` · ${action}` : ""}`;
     tone = "success";
-    Icon = ScanFace;
+    Icon = Smile;
   }
 
   return (
@@ -135,7 +178,7 @@ function StatusCard({
           <p className="mt-1 text-sm text-slate-700">{message}</p>
           {uiState === "recognized" && result?.person ? (
             <p className="mt-2 text-sm font-medium text-emerald-800">
-              Confidence: {Math.round(result.confidence * 100)}%
+              Match confidence: {Math.round(result.confidence * 100)}%
             </p>
           ) : null}
         </div>

@@ -28,6 +28,29 @@ export type Person = {
   faces?: FaceImage[];
 };
 
+export type BoundingBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type DetectedFace = {
+  index: number;
+  bbox: BoundingBox;
+  recognized: boolean;
+  person: {
+    id: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+  confidence: number;
+  emotion: string;
+  emotion_label: string;
+  action: string;
+  emotion_confidence: number;
+};
+
 export type RecognitionResult = {
   recognized: boolean;
   person: {
@@ -37,7 +60,10 @@ export type RecognitionResult = {
   } | null;
   confidence: number;
   face_detected: boolean;
+  face_count: number;
+  recognized_face_index: number | null;
   message: string | null;
+  faces: DetectedFace[];
 };
 
 export type RecognitionStatus = {

@@ -9,12 +9,34 @@ class PersonMatch(BaseModel):
     last_name: str
 
 
+class BoundingBox(BaseModel):
+    x: float
+    y: float
+    width: float
+    height: float
+
+
+class FaceObservation(BaseModel):
+    index: int
+    bbox: BoundingBox
+    recognized: bool = False
+    person: PersonMatch | None = None
+    confidence: float = 0.0
+    emotion: str = "neutral"
+    emotion_label: str = "Neutral"
+    action: str = "Neutral expression"
+    emotion_confidence: float = 0.0
+
+
 class RecognitionResponse(BaseModel):
     recognized: bool
     person: PersonMatch | None = None
     confidence: float = 0.0
     face_detected: bool = True
+    face_count: int = 0
+    recognized_face_index: int | None = None
     message: str | None = None
+    faces: list[FaceObservation] = Field(default_factory=list)
 
 
 class RecognitionStatusResponse(BaseModel):

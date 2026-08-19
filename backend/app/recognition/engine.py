@@ -105,5 +105,35 @@ class FaceEngine:
             return None
         return embedding
 
+    def analyze_faces(self, image: np.ndarray) -> list[dict]:
+        """Return every detected face with geometry and embedding, left to right."""
+        height, width = image.shape[:2]
+        detections = self.detect_faces(image)
+        detections = sorted(
+            detections,
+            key=lambda face: float(face.bbox[0]) if face.bbox is not None else 0.0,
+        )
+        results: list[dict] = []
+        for face in detections:
+            bbox = np.asarray(face.bbox, dtype=np.float32)
+            x1, y1, x2, y2 = bbox.tolist()
+            embedding = np.asarray(getattr(face, "embedding", []), dtype=np.float32)
+            kps = np.asarray(face.kps, dtype=np.float32) if getattr(face, "kps", None) is not None else None
+            results.append(
+                {
+                    "bbox": bbox,
+                    "normalized_bbox": {
+                        "x": round(max(x1, 0) / width, 4),
+                        "y": round(max(y1, 0) / height, 4),
+                        "width": round(max(x2 - x1, 1) / width, 4),
+                        "height": round(max(y2 - y1, 1) / height, 4),
+                    },
+                    "embedding": embedding,
+                    "kps": kps,
+                    "det_score": float(getattr(face, "det_score", 0.0) or 0.0),
+                }
+            )
+        return results
+
 
 face_engine = FaceEngine()
