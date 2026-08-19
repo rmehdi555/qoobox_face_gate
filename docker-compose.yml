@@ -35,6 +35,11 @@ services:
       FACE_RECOGNITION_MODEL: ${FACE_RECOGNITION_MODEL:-buffalo_s}
       RECOGNITION_INTERVAL_MS: ${RECOGNITION_INTERVAL_MS:-500}
       MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-10}
+      MAX_AUDIO_UPLOAD_SIZE_MB: ${MAX_AUDIO_UPLOAD_SIZE_MB:-25}
+      WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+      WHISPER_DEVICE: cpu
+      WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      WHISPER_DOWNLOAD_ROOT: ${WHISPER_DOWNLOAD_ROOT:-/app/storage/whisper}
       STORAGE_PATH: ${STORAGE_PATH:-/app/storage/faces}
       INSIGHTFACE_HOME: ${INSIGHTFACE_HOME:-/app/storage/models}
       ONNX_EXECUTION_PROVIDERS: CPUExecutionProvider
@@ -47,6 +52,7 @@ services:
     volumes:
       - face_storage:/app/storage/faces
       - insightface_models:/app/storage/models
+      - whisper_models:/app/storage/whisper
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,3 +97,4 @@ volumes:
   postgres_data:
   face_storage:
   insightface_models:
+  whisper_models:

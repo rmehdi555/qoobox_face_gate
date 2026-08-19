@@ -11,6 +11,7 @@ import { LiveRecognitionPage } from "./pages/LiveRecognitionPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PeoplePage } from "./pages/PeoplePage";
 import { PersonEditorPage } from "./pages/PersonEditorPage";
+import { SpeechPage } from "./pages/SpeechPage";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
               <Route path="/people/:id" element={<PersonEditorPage mode="view" />} />
               <Route path="/people/:id/edit" element={<PersonEditorPage mode="edit" />} />
               <Route path="/live" element={<LiveRecognitionPage />} />
+              <Route path="/speech" element={<SpeechPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

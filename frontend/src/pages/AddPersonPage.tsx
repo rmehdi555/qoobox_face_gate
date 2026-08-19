@@ -58,7 +58,7 @@ export function AddPersonPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Add Person</h1>
-        <p className="mt-1 text-sm text-slate-500">Enter a name and upload one or more face images.</p>
+        <p className="mt-1 text-sm text-slate-500">Enter a name, then upload face images or take photos with the camera.</p>
       </div>
       <Card className="p-6">
         <form className="space-y-5" onSubmit={onSubmit}>

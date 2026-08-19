@@ -88,3 +88,19 @@ export type DashboardStats = {
 
 export type CameraState = "idle" | "starting" | "running" | "denied" | "unavailable";
 export type RecognitionUiState = "idle" | "recognized" | "unknown" | "no-face" | "error";
+
+export type TranscriptionResult = {
+  text: string;
+  language: string | null;
+  language_probability: number;
+  duration_seconds: number;
+  model: string;
+};
+
+export type SpeechStatus = {
+  status: string;
+  model_loaded: boolean;
+  model_name: string;
+  device: string;
+  error?: string | null;
+};

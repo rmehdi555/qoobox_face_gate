@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxext6 \
         libxrender1 \
         curl \
+        ffmpeg \
         gcc \
         g++ \
         make \
@@ -46,7 +47,7 @@ COPY . .
 
 RUN sed -i 's/\r$//' /app/entrypoint.sh \
     && chmod +x /app/entrypoint.sh \
-    && mkdir -p /app/storage/faces /app/storage/models
+    && mkdir -p /app/storage/faces /app/storage/models /app/storage/whisper
 
 EXPOSE 8000
 

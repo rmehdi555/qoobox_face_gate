@@ -1,4 +1,4 @@
-import type { DashboardStats, FaceImage, Person, RecognitionResult, RecognitionStatus, TokenResponse, User } from "../types";
+import type { DashboardStats, FaceImage, Person, RecognitionResult, RecognitionStatus, SpeechStatus, TokenResponse, TranscriptionResult, User } from "../types";
 
 const TOKEN_KEY = "facegate_token";
 
@@ -130,5 +130,14 @@ export const api = {
     const data = new FormData();
     data.append("file", file, "frame.jpg");
     return request<RecognitionResult>("/recognition/recognize", { method: "POST", body: data });
+  },
+  speechStatus() {
+    return request<SpeechStatus>("/speech/status");
+  },
+  transcribe(file: Blob, filename: string, language: string) {
+    const data = new FormData();
+    data.append("file", file, filename);
+    data.append("language", language);
+    return request<TranscriptionResult>("/speech/transcribe", { method: "POST", body: data });
   },
 };

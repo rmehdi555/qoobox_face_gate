@@ -50,6 +50,11 @@ class MultipleFacesError(AppError):
         )
 
 
-class ConflictError(AppError):
-    def __init__(self, message: str) -> None:
-        super().__init__(message, status.HTTP_409_CONFLICT)
+class ServiceUnavailableError(AppError):
+    def __init__(self, message: str = "The requested service is not ready yet") -> None:
+        super().__init__(message, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class InvalidAudioError(AppError):
+    def __init__(self, message: str = "The uploaded file is not a valid audio recording") -> None:
+        super().__init__(message, status.HTTP_400_BAD_REQUEST)

@@ -13,6 +13,7 @@ from app.core.logging import configure_logging, get_logger
 from app.database.session import SessionLocal
 from app.middleware.request_logging import RequestLoggingMiddleware
 from app.recognition.service import recognition_service
+from app.speech.transcriber import speech_service
 
 configure_logging(settings.log_level)
 logger = get_logger(__name__)
@@ -45,8 +46,14 @@ async def lifespan(_: FastAPI):
             logger.exception(
                 "Recognition model failed to load; recognition endpoints will error until it succeeds"
             )
+        try:
+            speech_service.load()
+        except Exception:
+            logger.exception(
+                "Whisper model failed to load; speech-to-text will error until it succeeds"
+            )
 
-    threading.Thread(target=load_model, daemon=True, name="insightface-loader").start()
+    threading.Thread(target=load_model, daemon=True, name="model-loader").start()
 
     yield
     logger.info("Shutting down FaceGate")
@@ -71,6 +78,7 @@ app = FastAPI(
         {"name": "Persons", "description": "Registered people"},
         {"name": "Face Images", "description": "Face image upload, download, and deletion"},
         {"name": "Recognition", "description": "Live face matching"},
+        {"name": "Speech", "description": "Speech-to-text transcription"},
         {"name": "Dashboard", "description": "Aggregate statistics"},
     ],
 )

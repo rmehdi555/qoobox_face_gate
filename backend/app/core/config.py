@@ -27,8 +27,13 @@ class Settings(BaseSettings):
     onnx_execution_providers: str = "CPUExecutionProvider"
 
     max_upload_size_mb: int = 10
+    max_audio_upload_size_mb: int = 25
     storage_path: str = "/app/storage/faces"
     insightface_home: str = "/app/storage/models"
+    whisper_model: str = "tiny"
+    whisper_device: str = "cpu"
+    whisper_compute_type: str = "int8"
+    whisper_download_root: str = "/app/storage/whisper"
 
     cors_origins: str = (
         "http://localhost:3000,http://localhost:5173,"
@@ -58,6 +63,10 @@ class Settings(BaseSettings):
     @property
     def max_upload_size_bytes(self) -> int:
         return self.max_upload_size_mb * 1024 * 1024
+
+    @property
+    def max_audio_upload_size_bytes(self) -> int:
+        return self.max_audio_upload_size_mb * 1024 * 1024
 
     @property
     def onnx_provider_list(self) -> list[str]:
