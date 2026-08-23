@@ -53,6 +53,11 @@ export function LiveSessionPage() {
             </select>
           </label>
           <div className="flex flex-wrap items-center gap-3">
+            {session.sessionId ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1 font-mono text-xs text-slate-600" title="Session ID">
+                {session.sessionId}
+              </span>
+            ) : null}
             <span className={clsx("rounded-full px-3 py-1 text-xs font-semibold", recording ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600")}>
               {recording ? `Recording ${formatClock(session.seconds)}` : busy ? "Please wait..." : "Idle"}
             </span>
@@ -171,9 +176,11 @@ export function LiveSessionPage() {
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-500">
-            {session.videoUrl
-              ? "Recording saved. Download the video, speaker transcript, or full event log."
-              : "After you press Stop, the video, transcript, and event log can be downloaded here."}
+            {session.savedSession
+              ? `Saved to the server. Recording URL: ${session.savedSession.recording_url || "none"}`
+              : session.videoUrl
+                ? "Recording saved locally. Download the video, speaker transcript, or full event log."
+                : "After you press Stop, the video, transcript, and event log are stored in the database."}
           </p>
         </Card>
       </div>

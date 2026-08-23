@@ -123,3 +123,48 @@ export type SpeechStatus = {
   device: string;
   error?: string | null;
 };
+
+export type SessionStartResult = {
+  id: string;
+  status: string;
+  language: string | null;
+  started_at: string;
+};
+
+export type SessionTranscriptLine = {
+  at_ms: number;
+  speaker: string;
+  text: string;
+};
+
+export type SessionFacialState = {
+  at_ms: number;
+  speaker: string;
+  action: string | null;
+  emotion: string | null;
+};
+
+export type SessionDetail = {
+  id: string;
+  status: string;
+  language: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  recording_url: string | null;
+  recording_filename: string | null;
+  transcript: SessionTranscriptLine[];
+  facial_states: SessionFacialState[];
+  events: Array<{
+    id: string | null;
+    at_ms: number;
+    kind: string;
+    speaker: string;
+    speaker_key: string;
+    text: string;
+    action?: string | null;
+    emotion?: string | null;
+  }>;
+  created_at: string;
+  updated_at: string;
+};

@@ -28,7 +28,9 @@ class Settings(BaseSettings):
 
     max_upload_size_mb: int = 10
     max_audio_upload_size_mb: int = 25
+    max_session_upload_size_mb: int = 200
     storage_path: str = "/app/storage/faces"
+    session_storage_path: str = "/app/storage/sessions"
     insightface_home: str = "/app/storage/models"
     whisper_model: str = "tiny"
     whisper_device: str = "cpu"
@@ -67,6 +69,10 @@ class Settings(BaseSettings):
     @property
     def max_audio_upload_size_bytes(self) -> int:
         return self.max_audio_upload_size_mb * 1024 * 1024
+
+    @property
+    def max_session_upload_size_bytes(self) -> int:
+        return self.max_session_upload_size_mb * 1024 * 1024
 
     @property
     def onnx_provider_list(self) -> list[str]:

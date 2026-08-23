@@ -58,3 +58,13 @@ class ServiceUnavailableError(AppError):
 class InvalidAudioError(AppError):
     def __init__(self, message: str = "The uploaded file is not a valid audio recording") -> None:
         super().__init__(message, status.HTTP_400_BAD_REQUEST)
+
+
+class ConflictError(AppError):
+    def __init__(self, message: str = "This action conflicts with the current state") -> None:
+        super().__init__(message, status.HTTP_409_CONFLICT)
+
+
+class InvalidRecordingError(AppError):
+    def __init__(self, message: str = "The uploaded file is not a valid session recording") -> None:
+        super().__init__(message, status.HTTP_400_BAD_REQUEST)

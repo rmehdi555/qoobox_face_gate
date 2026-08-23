@@ -1,6 +1,10 @@
 import os
+import tempfile
 
 os.environ["FACEGATE_TESTING"] = "1"
+_test_storage = tempfile.mkdtemp(prefix="facegate-test-")
+os.environ.setdefault("STORAGE_PATH", _test_storage)
+os.environ.setdefault("SESSION_STORAGE_PATH", _test_storage)
 
 from collections.abc import Generator
 from datetime import datetime, timezone

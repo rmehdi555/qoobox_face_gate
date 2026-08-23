@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.person import Person
 from app.models.face_image import FaceImage
 from app.models.face_embedding import FaceEmbedding
+from app.models.live_session import LiveSession
 
 
 class UserRepository:
@@ -148,3 +149,33 @@ class FaceRepository:
             .join(Person, Person.id == FaceEmbedding.person_id)
         )
         return list(self.db.execute(stmt).all())
+
+
+class LiveSessionRepository:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def create(self, created_by: UUID | None, language: str | None) -> LiveSession:
+        session = LiveSession(
+            created_by=created_by,
+            status="recording",
+            language=language,
+            events=[],
+        )
+        self.db.add(session)
+        self.db.commit()
+        self.db.refresh(session)
+        return session
+
+    def get(self, session_id: UUID) -> LiveSession | None:
+        return self.db.get(LiveSession, session_id)
+
+    def list(self, skip: int = 0, limit: int = 100) -> list[LiveSession]:
+        stmt = select(LiveSession).order_by(LiveSession.started_at.desc()).offset(skip).limit(limit)
+        return list(self.db.scalars(stmt).all())
+
+    def save(self, session: LiveSession) -> LiveSession:
+        self.db.add(session)
+        self.db.commit()
+        self.db.refresh(session)
+        return session

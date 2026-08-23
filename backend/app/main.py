@@ -79,6 +79,7 @@ app = FastAPI(
         {"name": "Face Images", "description": "Face image upload, download, and deletion"},
         {"name": "Recognition", "description": "Live face matching"},
         {"name": "Speech", "description": "Speech-to-text transcription"},
+        {"name": "Sessions", "description": "Live session start, stop, recording, and stored results"},
         {"name": "Dashboard", "description": "Aggregate statistics"},
     ],
 )

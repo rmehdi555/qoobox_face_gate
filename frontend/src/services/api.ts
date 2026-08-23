@@ -1,4 +1,4 @@
-import type { DashboardStats, FaceImage, Person, RecognitionResult, RecognitionStatus, SpeechStatus, TokenResponse, TranscriptionResult, User } from "../types";
+import type { DashboardStats, FaceImage, Person, RecognitionResult, RecognitionStatus, SessionDetail, SessionEvent, SessionStartResult, SpeechStatus, TokenResponse, TranscriptionResult, User } from "../types";
 
 const TOKEN_KEY = "facegate_token";
 
@@ -139,5 +139,62 @@ export const api = {
     data.append("file", file, filename);
     data.append("language", language);
     return request<TranscriptionResult>("/speech/transcribe", { method: "POST", body: data });
+  },
+  startSession(language: string) {
+    return request<SessionStartResult>("/sessions/start", {
+      method: "POST",
+      body: JSON.stringify({ language }),
+    });
+  },
+  stopSession(
+    sessionId: string,
+    payload: {
+      events: SessionEvent[];
+      durationSeconds?: number;
+      language?: string;
+      file?: Blob | null;
+      filename?: string;
+    },
+  ) {
+    const data = new FormData();
+    data.append(
+      "events",
+      JSON.stringify(
+        payload.events.map((event) => ({
+          id: event.id,
+          at_ms: event.atMs,
+          kind: event.kind,
+          speaker: event.speaker,
+          speaker_key: event.speakerKey,
+          text: event.text,
+          action: event.action ?? null,
+          emotion: event.emotion ?? null,
+        })),
+      ),
+    );
+    if (payload.durationSeconds != null) {
+      data.append("duration_seconds", String(payload.durationSeconds));
+    }
+    if (payload.language) {
+      data.append("language", payload.language);
+    }
+    if (payload.file) {
+      data.append("file", payload.file, payload.filename || "session.webm");
+    }
+    return request<SessionDetail>(`/sessions/${sessionId}/stop`, { method: "POST", body: data });
+  },
+  getSession(sessionId: string) {
+    return request<SessionDetail>(`/sessions/${sessionId}`);
+  },
+  async sessionRecordingUrl(sessionId: string): Promise<string> {
+    const token = getToken();
+    const response = await fetch(`${apiBase()}/sessions/${sessionId}/recording`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      throw new ApiError("Unable to load session recording", response.status);
+    }
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
   },
 };

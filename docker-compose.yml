@@ -36,11 +36,13 @@ services:
       RECOGNITION_INTERVAL_MS: ${RECOGNITION_INTERVAL_MS:-500}
       MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-10}
       MAX_AUDIO_UPLOAD_SIZE_MB: ${MAX_AUDIO_UPLOAD_SIZE_MB:-25}
+      MAX_SESSION_UPLOAD_SIZE_MB: ${MAX_SESSION_UPLOAD_SIZE_MB:-200}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
       WHISPER_DEVICE: cpu
       WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
       WHISPER_DOWNLOAD_ROOT: ${WHISPER_DOWNLOAD_ROOT:-/app/storage/whisper}
       STORAGE_PATH: ${STORAGE_PATH:-/app/storage/faces}
+      SESSION_STORAGE_PATH: ${SESSION_STORAGE_PATH:-/app/storage/sessions}
       INSIGHTFACE_HOME: ${INSIGHTFACE_HOME:-/app/storage/models}
       ONNX_EXECUTION_PROVIDERS: CPUExecutionProvider
       CUDA_VISIBLE_DEVICES: "-1"
@@ -51,6 +53,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - face_storage:/app/storage/faces
+      - session_storage:/app/storage/sessions
       - insightface_models:/app/storage/models
       - whisper_models:/app/storage/whisper
     depends_on:
@@ -96,5 +99,6 @@ services:
 volumes:
   postgres_data:
   face_storage:
+  session_storage:
   insightface_models:
   whisper_models:

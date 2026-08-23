@@ -4,7 +4,7 @@ import { drawFaceOverlay } from "../lib/drawFaces";
 import { IdentityTracker, pickSpeaker, type LabeledFace, type TrackedSpeaker } from "../lib/identityTracker";
 import { downloadBlob, extensionForMime, formatClock, pickAudioMime, pickVideoMime, stampFilename } from "../lib/media";
 import { ApiError, api } from "../services/api";
-import type { CameraState, SessionEvent } from "../types";
+import type { CameraState, SessionDetail, SessionEvent } from "../types";
 
 const AUDIO_CHUNK_MS = 5000;
 const STORAGE_KEY = "facegate_last_session";
@@ -64,6 +64,9 @@ export function useLiveSession({ intervalMs, language }: Options) {
   const sessionActiveRef = useRef(false);
   const startedAtRef = useRef(0);
   const videoUrlRef = useRef<string | null>(null);
+  const eventsRef = useRef<SessionEvent[]>([]);
+  const secondsRef = useRef(0);
+  const sessionIdRef = useRef<string | null>(null);
 
   const [status, setStatus] = useState<SessionStatus>("idle");
   const [cameraState, setCameraState] = useState<CameraState>("idle");
@@ -75,10 +78,13 @@ export function useLiveSession({ intervalMs, language }: Options) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoMime, setVideoMime] = useState("video/webm");
   const [speechBusy, setSpeechBusy] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [savedSession, setSavedSession] = useState<SessionDetail | null>(null);
 
   const pushEvent = useCallback((event: SessionEvent) => {
     setEvents((current) => {
       const next = [...current, event];
+      eventsRef.current = next;
       persistEvents(next);
       return next;
     });
@@ -270,6 +276,10 @@ export function useLiveSession({ intervalMs, language }: Options) {
     stopTimer(clockTimerRef);
     stopTimer(recognizeTimerRef);
     await stopChunkRecorder();
+    const waitUntil = Date.now() + 15000;
+    while (transcribing.current && Date.now() < waitUntil) {
+      await new Promise((resolve) => window.setTimeout(resolve, 200));
+    }
     const sessionRecorder = sessionRecorderRef.current;
     sessionRecorderRef.current = null;
     let recorded: Blob | null = null;
@@ -301,8 +311,25 @@ export function useLiveSession({ intervalMs, language }: Options) {
       setVideoUrl(url);
       setVideoMime(recorded.type || videoMime);
     }
+    const remoteId = sessionIdRef.current;
+    if (remoteId) {
+      try {
+        const extension = extensionForMime(recorded?.type || videoMime, "mp4");
+        const saved = await api.stopSession(remoteId, {
+          events: eventsRef.current,
+          durationSeconds: secondsRef.current,
+          language,
+          file: recorded && recorded.size > 0 ? recorded : null,
+          filename: `session.${extension}`,
+        });
+        setSavedSession(saved);
+      } catch (error) {
+        const message = error instanceof ApiError ? error.message : "Unable to save the session";
+        setNetworkError(message);
+      }
+    }
     setStatus("idle");
-  }, [status, stopChunkRecorder, stopTimer, stopTracks, videoMime]);
+  }, [language, status, stopChunkRecorder, stopTimer, stopTracks, videoMime]);
 
   const start = useCallback(async () => {
     setCameraError("");
@@ -316,6 +343,11 @@ export function useLiveSession({ intervalMs, language }: Options) {
       return;
     }
     try {
+      const created = await api.startSession(language);
+      sessionIdRef.current = created.id;
+      setSessionId(created.id);
+      setSavedSession(null);
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
@@ -332,6 +364,8 @@ export function useLiveSession({ intervalMs, language }: Options) {
       lastPresenceRef.current = "";
       sessionChunksRef.current = [];
       startedAtRef.current = Date.now();
+      eventsRef.current = [];
+      secondsRef.current = 0;
       setEvents([]);
       persistEvents([]);
       setCurrentFaces([]);
@@ -360,13 +394,25 @@ export function useLiveSession({ intervalMs, language }: Options) {
       if (audioTracks.length) {
         startAudioChunk(new MediaStream(audioTracks));
       }
-      clockTimerRef.current = window.setInterval(() => setSeconds((value) => value + 1), 1000);
+      clockTimerRef.current = window.setInterval(() => {
+        setSeconds((value) => {
+          const next = value + 1;
+          secondsRef.current = next;
+          return next;
+        });
+      }, 1000);
       recognizeTimerRef.current = window.setInterval(() => {
         void captureAndRecognize();
       }, Math.max(intervalMs, 250));
       setCameraState("running");
       setStatus("recording");
     } catch (error) {
+      if (error instanceof ApiError) {
+        setNetworkError(error.message);
+        setCameraState("idle");
+        setStatus("idle");
+        return;
+      }
       const name = error instanceof DOMException ? error.name : "";
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
         setCameraState("denied");
@@ -378,10 +424,15 @@ export function useLiveSession({ intervalMs, language }: Options) {
         setCameraState("unavailable");
         setCameraError("Camera or microphone unavailable. Allow access and try again.");
       }
+      if (sessionIdRef.current) {
+        void api.stopSession(sessionIdRef.current, { events: [] }).catch(() => undefined);
+        sessionIdRef.current = null;
+        setSessionId(null);
+      }
       stopTracks();
       setStatus("idle");
     }
-  }, [captureAndRecognize, intervalMs, startAudioChunk, stopTracks]);
+  }, [captureAndRecognize, intervalMs, language, startAudioChunk, stopTracks]);
 
   const downloadVideo = useCallback(() => {
     if (!videoUrl) {
@@ -413,7 +464,11 @@ export function useLiveSession({ intervalMs, language }: Options) {
 
   const clearLog = useCallback(() => {
     setEvents([]);
+    eventsRef.current = [];
     persistEvents([]);
+    sessionIdRef.current = null;
+    setSessionId(null);
+    setSavedSession(null);
     if (videoUrlRef.current) {
       URL.revokeObjectURL(videoUrlRef.current);
       videoUrlRef.current = null;
@@ -455,6 +510,8 @@ export function useLiveSession({ intervalMs, language }: Options) {
     events,
     videoUrl,
     speechBusy,
+    sessionId,
+    savedSession,
     start,
     stop,
     downloadVideo,
