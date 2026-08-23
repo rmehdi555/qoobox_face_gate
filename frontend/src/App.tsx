@@ -8,6 +8,7 @@ import { AdminLayout } from "./layouts/AdminLayout";
 import { AddPersonPage } from "./pages/AddPersonPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LiveRecognitionPage } from "./pages/LiveRecognitionPage";
+import { LiveSessionPage } from "./pages/LiveSessionPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PeoplePage } from "./pages/PeoplePage";
 import { PersonEditorPage } from "./pages/PersonEditorPage";
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/people/:id" element={<PersonEditorPage mode="view" />} />
               <Route path="/people/:id/edit" element={<PersonEditorPage mode="edit" />} />
               <Route path="/live" element={<LiveRecognitionPage />} />
+              <Route path="/session" element={<LiveSessionPage />} />
               <Route path="/speech" element={<SpeechPage />} />
             </Route>
           </Route>

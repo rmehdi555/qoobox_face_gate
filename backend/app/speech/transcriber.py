@@ -84,7 +84,19 @@ class SpeechToTextService:
                 beam_size=1,
                 vad_filter=True,
             )
-            text = " ".join(segment.text.strip() for segment in segments).strip()
+            collected: list[dict] = []
+            for segment in segments:
+                piece = (segment.text or "").strip()
+                if not piece:
+                    continue
+                collected.append(
+                    {
+                        "start": round(float(getattr(segment, "start", 0.0) or 0.0), 2),
+                        "end": round(float(getattr(segment, "end", 0.0) or 0.0), 2),
+                        "text": piece,
+                    }
+                )
+            text = " ".join(item["text"] for item in collected).strip()
             detected = getattr(info, "language", None)
             probability = float(getattr(info, "language_probability", 0.0) or 0.0)
             duration = float(getattr(info, "duration", 0.0) or 0.0)
@@ -94,6 +106,7 @@ class SpeechToTextService:
                 "language_probability": round(probability, 4),
                 "duration_seconds": round(duration, 2),
                 "model": settings.whisper_model,
+                "segments": collected,
             }
         except ServiceUnavailableError:
             raise

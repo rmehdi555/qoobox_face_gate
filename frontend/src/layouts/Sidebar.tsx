@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Camera, LayoutDashboard, LogOut, Mic, ScanFace, Users } from "lucide-react";
+import { Camera, LayoutDashboard, LogOut, Mic, ScanFace, Users, Video } from "lucide-react";
 import clsx from "clsx";
 
 import { useAuth } from "../hooks/useAuth";
@@ -9,6 +9,7 @@ const links = [
   { to: "/people", label: "People", icon: Users },
   { to: "/people/new", label: "Add Person", icon: ScanFace },
   { to: "/live", label: "Live Recognition", icon: Camera },
+  { to: "/session", label: "Live Session", icon: Video },
   { to: "/speech", label: "Speech to Text", icon: Mic },
 ];
 

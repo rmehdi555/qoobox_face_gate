@@ -26,6 +26,7 @@ class FaceObservation(BaseModel):
     emotion_label: str = "Neutral"
     action: str = "Neutral expression"
     emotion_confidence: float = 0.0
+    embedding: list[float] = Field(default_factory=list)
 
 
 class RecognitionResponse(BaseModel):

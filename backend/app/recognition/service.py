@@ -134,6 +134,11 @@ class RecognitionService:
                     first_name=match.first_name,
                     last_name=match.last_name,
                 )
+            embedding_list = (
+                [round(float(value), 5) for value in embedding.tolist()]
+                if embedding is not None and embedding.size > 0
+                else []
+            )
             observations.append(
                 FaceObservation(
                     index=position,
@@ -141,6 +146,7 @@ class RecognitionService:
                     recognized=match is not None,
                     person=person,
                     confidence=round(match.confidence, 4) if match is not None else 0.0,
+                    embedding=embedding_list,
                     **emotion,
                 )
             )

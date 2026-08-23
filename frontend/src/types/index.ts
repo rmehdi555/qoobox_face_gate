@@ -49,6 +49,7 @@ export type DetectedFace = {
   emotion_label: string;
   action: string;
   emotion_confidence: number;
+  embedding?: number[];
 };
 
 export type RecognitionResult = {
@@ -89,12 +90,30 @@ export type DashboardStats = {
 export type CameraState = "idle" | "starting" | "running" | "denied" | "unavailable";
 export type RecognitionUiState = "idle" | "recognized" | "unknown" | "no-face" | "error";
 
+export type TranscriptSegment = {
+  start: number;
+  end: number;
+  text: string;
+};
+
 export type TranscriptionResult = {
   text: string;
   language: string | null;
   language_probability: number;
   duration_seconds: number;
   model: string;
+  segments?: TranscriptSegment[];
+};
+
+export type SessionEvent = {
+  id: string;
+  atMs: number;
+  kind: "presence" | "speech";
+  speaker: string;
+  speakerKey: string;
+  text: string;
+  action?: string;
+  emotion?: string;
 };
 
 export type SpeechStatus = {

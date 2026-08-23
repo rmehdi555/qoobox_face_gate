@@ -152,7 +152,6 @@ export function SpeechPage() {
           >
             <option value="auto">Auto detect</option>
             <option value="en">English</option>
-            <option value="fa">Persian</option>
           </select>
         </label>
 

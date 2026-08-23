@@ -1,46 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { drawFaceOverlay } from "../lib/drawFaces";
 import { ApiError, api } from "../services/api";
-import type { CameraState, DetectedFace, RecognitionResult, RecognitionUiState } from "../types";
+import type { CameraState, RecognitionResult, RecognitionUiState } from "../types";
 
 type Options = {
   intervalMs: number;
   enabled: boolean;
 };
-
-function drawOverlay(
-  canvas: HTMLCanvasElement,
-  faces: DetectedFace[],
-  recognizedIndex: number | null,
-) {
-  const context = canvas.getContext("2d");
-  if (!context) {
-    return;
-  }
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  faces.forEach((face) => {
-    const x = face.bbox.x * canvas.width;
-    const y = face.bbox.y * canvas.height;
-    const width = face.bbox.width * canvas.width;
-    const height = face.bbox.height * canvas.height;
-    const isPrimary = recognizedIndex === face.index;
-    const color = face.recognized ? "#34d399" : "#fbbf24";
-    context.lineWidth = isPrimary ? 5 : 3;
-    context.strokeStyle = color;
-    context.strokeRect(x, y, width, height);
-
-    const name = face.person ? `${face.person.first_name} ${face.person.last_name}` : "Unknown";
-    const label = `#${face.index} ${name} · ${face.action}`;
-    context.font = "600 16px Inter, sans-serif";
-    const textWidth = context.measureText(label).width;
-    const boxHeight = 26;
-    const labelY = Math.max(0, y - boxHeight - 4);
-    context.fillStyle = "rgba(15, 23, 42, 0.85)";
-    context.fillRect(x, labelY, Math.min(textWidth + 16, width + 80), boxHeight);
-    context.fillStyle = color;
-    context.fillText(label, x + 8, labelY + 18);
-  });
-}
 
 export function useLiveRecognition({ intervalMs, enabled }: Options) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -128,7 +95,16 @@ export function useLiveRecognition({ intervalMs, enabled }: Options) {
       setNetworkError("");
       setResult(recognition);
       if (overlay) {
-        drawOverlay(overlay, recognition.faces || [], recognition.recognized_face_index);
+        drawFaceOverlay(
+          overlay,
+          (recognition.faces || []).map((face) => ({
+            index: face.index,
+            bbox: face.bbox,
+            recognized: face.recognized,
+            label: `#${face.index} ${face.person ? `${face.person.first_name} ${face.person.last_name}` : "Unknown"} · ${face.action}`,
+          })),
+          recognition.recognized_face_index,
+        );
       }
       if (!recognition.face_detected) {
         setUiState("no-face");

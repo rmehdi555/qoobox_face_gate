@@ -20,6 +20,7 @@ def test_transcribe_success(client: TestClient, auth_headers: dict[str, str], mo
             "language_probability": 0.98,
             "duration_seconds": 1.2,
             "model": "tiny",
+            "segments": [{"start": 0.0, "end": 1.2, "text": "Hello world"}],
         },
     )
     response = client.post(
@@ -32,6 +33,7 @@ def test_transcribe_success(client: TestClient, auth_headers: dict[str, str], mo
     body = response.json()
     assert body["text"] == "Hello world"
     assert body["language"] == "en"
+    assert body["segments"][0]["text"] == "Hello world"
 
 
 def test_transcribe_rejects_invalid_audio(client: TestClient, auth_headers: dict[str, str], monkeypatch) -> None:

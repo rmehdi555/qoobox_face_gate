@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera, Images, Mic, ScanFace, Users } from "lucide-react";
+import { Camera, Images, Mic, ScanFace, Users, Video } from "lucide-react";
 
 import { Card } from "../components/ui/Card";
 import { Spinner } from "../components/ui/Spinner";
@@ -59,6 +59,10 @@ export function DashboardPage() {
           <Link to="/live" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <Camera className="h-4 w-4" />
             Live Recognition
+          </Link>
+          <Link to="/session" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Video className="h-4 w-4" />
+            Live Session
           </Link>
           <Link to="/speech" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <Mic className="h-4 w-4" />
